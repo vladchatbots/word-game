@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Word Game</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    padding: 20px;
+    background: #f2f2f2;
+  }
+
+  .word-container {
+    margin-bottom: 40px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+
+  .letter-box {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #333;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px;
+    font-size: 22px;
+    font-weight: bold;
+    background: white;
+    border-radius: 6px;
+  }
+
+  .letter-bank {
+    margin-top: 20px;
+  }
+
+  .letter {
+    display: inline-block;
+    padding: 10px 14px;
+    margin: 5px;
+    background: #eee;
+    border-radius: 6px;
+    font-size: 20px;
+    cursor: grab;
+    font-weight: bold;
+  }
+
+  .letter:active {
+    cursor: grabbing;
+  }
+
+  .hint {
+    font-size: 15px;
+    margin-top: 10px;
+    color: #777;
+  }
+
+  .correct { background: #8EF68F !important; }
+  .wrong   { background: #FF9A9A !important; }
+</style>
+</head>
+
+<body>
+
+<h1>Мини-игра: Собери слово</h1>
+<p>Перетаскивай буквы в квадратики и собирай правильные слова.</p>
+
+<div id="game"></div>
+
+<script>
+// 5 слов для игры:
+const words = [
+  { answer: "МАМА", hint: "Кто любит больше всех?" },
+  { answer: "КОД", hint: "То, что мы сейчас создаём :)" },
+  { answer: "КОТ", hint: "Мягкий и пушистый" },
+  { answer: "МЯЧ", hint: "Им играют в футбол" },
+  { answer: "СОЛО", hint: "Один в музыкальной партии" }
+];
+
+function shuffle(str) {
+  return str.split('').sort(() => Math.random() - 0.5).join('');
+}
+
+// Рисуем игру
+const gameDiv = document.getElementById("game");
+
+words.forEach((obj, index) => {
+  const container = document.createElement("div");
+  container.className = "word-container";
+
+  // Загаданные буквы
+  let html = `<div id="word${index}">`;
+  for (let i = 0; i < obj.answer.length; i++) {
+    html += `<div class="letter-box" data-index="${i}" data-word="${index}"></div>`;
+  }
+  html += `</div>`;
+
+  // Банк букв
+  let shuffled = shuffle(obj.answer);
+  html += `<div class="letter-bank">`;
+  shuffled.split('').forEach((letter) => {
+    html += `<div class="letter" draggable="true">${letter}</div>`;
+  });
+  html += `</div>`;
+
+  html += `<div class="hint">Подсказка: ${obj.hint}</div>`;
+
+  container.innerHTML = html;
+  gameDiv.appendChild(container);
+});
+
+// Drag & Drop
+document.addEventListener("dragstart", function(e) {
+  if (e.target.classList.contains("letter")) {
+    e.dataTransfer.setData("text", e.target.textContent);
+  }
+});
+
+document.addEventListener("dragover", function(e) {
+  if (e.target.classList.contains("letter-box")) {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener("drop", function(e) {
+  if (e.target.classList.contains("letter-box")) {
+    e.preventDefault();
+    const letter = e.dataTransfer.getData("text");
+    e.target.textContent = letter;
+    checkWord(e.target.dataset.word);
+  }
+});
+
+// Проверка слова
+function checkWord(wordIndex) {
+  const obj = words[wordIndex];
+  const boxes = document.querySelectorAll(`[data-word="${wordIndex}"]`);
+
+  let formed = "";
+  boxes.forEach(b => formed += (b.textContent || "_"));
+
+  if (formed.length !== obj.answer.length) return;
+
+  if (formed === obj.answer) {
+    boxes.forEach(b => {
+      b.classList.remove("wrong");
+      b.classList.add("correct");
+    });
+  } else {
+    boxes.forEach(b => {
+      b.classList.remove("correct");
+      b.classList.add("wrong");
+    });
+  }
+}
+</script>
+
+</body>
+</html>
